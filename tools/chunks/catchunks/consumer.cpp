@@ -3,13 +3,13 @@
 //#include "../putchunks/producer.hpp"
 #include "core/common.hpp"
 #include <vector>
-#include <string>
+#include <fstream>
+#include "city-hash.hpp"
 
 
 
 
 namespace ndn {
-int titleNumber =0;
 
 namespace chunks {
 	
@@ -27,24 +27,17 @@ namespace chunks {
 shared_ptr<const Data> Consumer::run(DiscoverVersion& discover, PipelineInterests& pipeline)
 {
   
-  //create folder to stor tmp vido viles to be combined
-  int status = system("mkdir -p /tmp/tmp_videos");
-  if(status == -1){
-	   std::cerr<<"Failed to make a temp folder" <<std::endl;
-	   exit (EXIT_FAILURE);
-  }
   m_pipeline = &pipeline;
   m_nextToPrint = 0;
 
   discover.onDiscoverySuccess.connect(bind(&Consumer::runWithData, this, _1));
   discover.onDiscoveryFailure.connect(bind(&Consumer::onFailure, this, _1));
-
+	
   discover.run();
   m_face.processEvents();
-
- writeInOrderData();
   
- return m_signature;
+  writeInOrderData();
+  return m_signature;
 
 }
 
@@ -78,18 +71,18 @@ Consumer::onDataValidated(shared_ptr<const Data> data)
     m_pipeline->cancel();
     throw ApplicationNackError(*data);
   }
-
+	
   //populate temporary storage with the data received
   int segmentNum = data->getName()[-1].toSegment();
   if(segmentNum ==0){ 
 	m_signature = data;
-	//Block content = data -> getContent();
-	//content.parse();
-	//std::cout<<"Got signature block with size: " <<content.elements_size() <<std::endl;
+	Block content = data -> getContent();
+	content.parse();
+	std::cout<<"Got signature block with size is: " <<content.elements_size()  <<std::endl;
 }
   else{
-	m_bufferedData[segmentNum -1] = data;
 	
+	m_bufferedData[segmentNum -1] = data;
 }
 
 
@@ -106,28 +99,31 @@ void
 Consumer::writeInOrderData()
 {
 	
-	std::string video_path = "/tmp/tmp_videos/" + std::to_string(titleNumber) + ".mp4";
-	std::ofstream video_out(video_path);
-    titleNumber++;
-    
-    //txt file containing the paths to the video files to be used by ffpeg combiner
-	std::ofstream file_path_txt("/tmp/tmp_videos/file_paths", std::ios_base::app);
-	std::string path = "file '" + video_path + "'\n";
-	file_path_txt << path;
-	file_path_txt.close();
 	
-       //std::cout<<"Got data..." <<std::endl;
+    
+	int status = system("mkdir -p /tmp/temp_videos");
+	if(status == -1){
+		std::cerr<<"Failed to make temp folder" <<std::endl;
+	}
+	else
+		std::cout<<"Created folder \"temp_videos\"..." <<std::endl; 
+	std::ofstream outfile ("/tmp/temp_videos/video.mp4",std::ofstream::binary);
+	
+       
   for (auto it = m_bufferedData.begin();
        it != m_bufferedData.end() && it->first == m_nextToPrint;
        it = m_bufferedData.erase(it), ++m_nextToPrint) {
-	
-    const Block& content = it->second->getContent();
 
-      video_out.write (reinterpret_cast<const char*>(content.value()), content.value_size());  
+        
+ const Block& content = it->second->getContent();
+
+  outfile.write(reinterpret_cast<const char*>(content.value()), content.value_size()); 
+  
+  
 
   }
-    std::cout<<"Wrote file to disk..." <<std::endl;
-     video_out.close();
+  
+
 }
 
 } // namespace chunks

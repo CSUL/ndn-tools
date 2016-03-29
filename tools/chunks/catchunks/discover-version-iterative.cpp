@@ -26,6 +26,7 @@
  */
 
 #include "discover-version-iterative.hpp"
+#include <iostream>
 
 namespace ndn {
 namespace chunks {
@@ -60,6 +61,7 @@ DiscoverVersionIterative::run()
 void
 DiscoverVersionIterative::handleData(const Interest& interest, const Data& data)
 {
+   std::cout<<"Signature was found: " <<reinterpret_cast<const char*>(data.getContent().value()) <<std::endl;
   size_t versionindex = m_prefix.size();
 
   const Name& name = data.getName();

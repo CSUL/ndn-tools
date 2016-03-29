@@ -6,6 +6,7 @@
 
 #include <ndn-cxx/security/validator.hpp>
 #include <fstream>
+#include <string>
 #include <iostream>
 
 namespace ndn {
@@ -54,6 +55,7 @@ private:
 
   void
   onFailure(const std::string& reason);
+  
 
 PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   void
@@ -66,11 +68,11 @@ private:
   uint64_t m_nextToPrint;
   std::ostream& m_outputStream;
   bool m_isVerbose;
-  std::vector<shared_ptr<const Data>> m_store;
-  std::ofstream outfile;
   shared_ptr<const Data> m_signature;
+ 
   
-
+  
+  
 PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   std::map<uint64_t, shared_ptr<const Data>> m_bufferedData;
 };
