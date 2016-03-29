@@ -3,26 +3,7 @@
 
 #include "core/common.hpp"
 #include <stdlib.h>
-#include <fstream>
-#include <iostream>
-#include "../src/encoding/block-helpers.hpp"
-#include "../src/util/crypto.hpp"
 
-#include "../src/security/cryptopp.hpp"
-#include <ndn-cxx/security/validator.hpp>
-
-using CryptoPP::Integer;
-using CryptoPP::FileSink;
-using CryptoPP::FileSource;
-using CryptoPP::AutoSeededRandomPool;
-using CryptoPP::PSSR;
-using CryptoPP::InvertibleRSAFunction;
-using CryptoPP::RSASS;
-using CryptoPP::RSA;
-using CryptoPP::Exception;
-using CryptoPP::DecodingResult;
-using CryptoPP::SHA1;
-using CryptoPP::SecByteBlock;
 
 
 namespace ndn {
@@ -71,22 +52,16 @@ private:
    */
 
   void
-  populateStore(std::ifstream& is);
+  populateStore(std::istream& is);
 
   void
   onRegisterFailed(const Name& prefix, const std::string& reason);
   
-  std::vector<shared_ptr<const Data>> 
+  void
   getData(const Name& name);
   
   void 
   parseInterest(const Name name);
-  
-  bool
-  rsaVerifier(std::string hashStr, std::string signCode,std::string keyCode) const;
-  
-  CryptoPP::SecByteBlock
-  HexDecodeString(const char *hex) const;
   
   std::string
   RSAEnc(std::string hashStr) const;
@@ -94,13 +69,10 @@ private:
   std::string
   termGenerator(const uint8_t* content, size_t contentLength) const;
   
-  bool
-  validate(IdentityCertificate certificate) const;
-  
   void 
   publishCertificate();
   
-  IdentityCertificate
+  IdentityCertificate 
   fetchCertificate(const Name &name);
 
 PUBLIC_WITH_TESTS_ELSE_PRIVATE:
@@ -116,55 +88,12 @@ private:
   size_t m_maxSegmentSize;
   bool m_isVerbose;
   bool m_running = false;
-  bool m_combined = false;
+  bool m_compressed = false;
   std::string m_newInterestName;
   std::string m_oldInterestName;
-  uint32_t m_numberOfAngles;
   std::vector<shared_ptr< Data>> m_prevNodeSig;
   
-  class CertificateFetcher : noncopyable
-{
-public:
-  IdentityCertificate
-  run(const Name &name)
-  {
-	    
-    Interest interest(name);
-    interest.setInterestLifetime(time::milliseconds(2000));
-    interest.setMustBeFresh(true);
-
-    m_face.expressInterest(interest,
-                           bind(&CertificateFetcher::onData, this,  _1, _2),
-                           bind(&CertificateFetcher::onTimeout, this, _1));
-
-    std::cout << "Fetching certificate... " << interest << std::endl;
-
-    // processEvents will block until the requested data received or timeout occurs
-    m_face.processEvents();
-    return certificate;
-  }
-
-private:
-  void
-  onData(const Interest& interest, const Data& data)
-  {
-    std::cout<<"Got certificate" <<std::endl <<std::endl;
-    std::cout<<data <<std::endl;
-    certificate = static_cast<IdentityCertificate>(data);
-  }
-
-  void
-  onTimeout(const Interest& interest)
-  {
-    std::cout <<std::endl << "FAILED to get certificate " << interest << std::endl <<std::endl;
-  }
-
-private:
-  Face m_face;
-  IdentityCertificate certificate;
-}; //CertificateFetcher
-
-class CertificatePublisher : noncopyable
+  class CertificatePublisher : noncopyable
 {
 public:
   void
@@ -202,6 +131,47 @@ private:
   KeyChain m_keyChain;
   shared_ptr<IdentityCertificate> certificate;
 };//CertificatePublisher
+
+class CertificateFetcher : noncopyable
+{
+public:
+  IdentityCertificate
+  run(const Name &name)
+  {
+    Interest interest(name);
+    interest.setInterestLifetime(time::milliseconds(2000));
+    interest.setMustBeFresh(true);
+
+    m_face.expressInterest(interest,
+                           bind(&CertificateFetcher::onData, this,  _1, _2),
+                           bind(&CertificateFetcher::onTimeout, this, _1));
+
+    std::cout << "Fetching certificate... " << interest << std::endl;
+
+    // processEvents will block until the requested data received or timeout occurs
+    m_face.processEvents();
+    return certificate;
+  }
+
+private:
+  void
+  onData(const Interest& interest, const Data& data)
+  {
+    std::cout<<"Got certificate" <<std::endl <<std::endl;
+    std::cout<<data <<std::endl;
+    certificate = static_cast<IdentityCertificate>(data);
+  }
+
+  void
+  onTimeout(const Interest& interest)
+  {
+    std::cout <<std::endl << "FAILED to get certificate " << interest << std::endl <<std::endl;
+  }
+
+private:
+  Face m_face;
+  IdentityCertificate certificate;
+};//CertificateFetcher
 
 };
 
