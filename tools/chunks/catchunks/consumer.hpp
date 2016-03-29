@@ -35,39 +35,24 @@
 #include <ndn-cxx/security/validator.hpp>
 #include <fstream>
 
-#include "src/encoding/block-helpers.hpp"
-#include "src/util/crypto.hpp"
+#include "../src/encoding/block-helpers.hpp"
+#include "../src/util/crypto.hpp"
 
-#include "src/security/cryptopp.hpp"
-
-//#include <src/cryptopp/integer.h>
+#include "../src/security/cryptopp.hpp"
 using CryptoPP::Integer;
-
-//#include <src/cryptopp/files.h>
 using CryptoPP::FileSink;
 using CryptoPP::FileSource;
-
-//#include <src/cryptopp/osrng.h>
 using CryptoPP::AutoSeededRandomPool;
-
-//#include <src/cryptopp/pssr.h>
 using CryptoPP::PSSR;
-
-//#include <src/cryptopp/rsa.h>
 using CryptoPP::InvertibleRSAFunction;
 using CryptoPP::RSASS;
 using CryptoPP::RSA;
-
-//#include <src/cryptopp/cryptlib.h>
-
 using CryptoPP::Exception;
 using CryptoPP::DecodingResult;
-
-//#include <src/cryptopp/secblock.h>
 using CryptoPP::SecByteBlock;
-
-//#include <src/cryptopp/sha.h>
 using CryptoPP::SHA1;
+
+
 namespace ndn {
 namespace chunks {
 
